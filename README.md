@@ -1,6 +1,6 @@
 # TerrorismClassification
 
-Improving the Classification of Terrorist Attacks: 
+## Improving the Classification of Terrorist Attacks: 
 A Study on Data Pre-processing for Mining the Global Terrorism Database
 
 This paper was published in 2010 at the 2nd International Conference on Software Technology and Engineering.  It has been read 383 times on Research Gate and cited 4 times.  The paper is also available at IEEE Explore.
