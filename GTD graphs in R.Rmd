@@ -1,0 +1,194 @@
+---
+title: "GTD Graphs Notebook"
+output: html_document
+---
+
+
+
+Read 2016 GTD database from Excel file download.
+```{r options(warn=0)}
+library(readxl)
+gtd <- read_excel("~/Downloads/globalterrorismdb_0221dist.xlsx")
+
+
+```
+
+
+```{r options(warn=0)}
+imagmiss <-
+function(data,name="")
+{
+
+#Function to create a graph of the observations of the dataset
+#leaving white lines where data is missing.
+#The main idea is to use the original dataset to create 
+#a temporary dataset containing 1 if a value is found or
+#0 is the value is missing. The temporary data set is graphed by column
+#changing color for each feature and leaving a blank horizontal line if
+#value is missing.
+
+#Uses the R function image from the base library.
+
+#data:  the dataset
+#name:the name of the dataset as desired in the graph title
+
+  ncol=dim(data)[2]
+  nrow=dim(data)[1]
+
+  xaxis=colnames(data)
+    xaxis = xaxis[-ncol]
+    ticks = 1:(dim(data)[2] - 1)
+    data = as.matrix(data)
+    data = data[, -ncol]
+    cat("Report on missing values for ",name,":\n")
+    cat("\nNumber of missing values overall: ")
+    cat(sum(is.na(data)))
+    cat("\nPercent of missing values overall: ")
+   cat((sum(is.na(data))/(dim(data)[1]*dim(data)[2]))*100)
+   cat("\nFeatures with missing values (percent): \n")
+   print(colSums(is.na(data))[colSums(is.na(data))!=0]/dim(data)[1]*100)
+   #cat("\n",length(which(colSums(is.na(data))!=0)))
+   cat("\nPercent of features with missing values: ")
+   cat(length(which(colSums(is.na(data))!=0))/dim(data)[2]*100)
+   cat("\nNumber of instances with missing values: ")
+   cat(length(which(rowSums(is.na(data))!=0, arr.ind=TRUE)))
+   cat("\nPercent of instances with missing values: ")
+   cat(length(which(rowSums(is.na(data))!=0))/dim(data)[1]*100)
+   cat("\n")
+  data[which(data!="NA")]=1
+  data[-which(data!="NA")]=0
+
+  ncol1=ncol-1
+
+  for(i in 1:ncol1)
+   {
+     data[data[,i]!=0,i]=i
+   }
+
+  x=1:ncol1
+  y=1:nrow
+data=apply(data,1,as.numeric)
+  graph.title=paste("Distribution of missing values by variable for - ",name)
+ 
+  image(x,y,data,col=c(0,topo.colors(100)),xlab="features",ylab="instances",axes=FALSE,main=(graph.title),cex.main=.7)
+  axis(1,labels=xaxis,at=ticks)
+}
+
+
+```
+
+
+```{r options(warn=0)}
+imagmiss(gtd, name="Global Terrorism Database")
+
+```
+
+
+
+
+Create Table with number of terrorist incidents by country by year for top 20 countries.
+```{r}
+w<-table(gtd[,2]) #total world incidents by year
+x<-table(gtd[,9]) # total number of incidents by country
+x<-sort(x) # list of countries in ascending order by total number of incidents by country
+top10<-rownames(tail(x,10)) # top 10 countries by number of terrorist incidents
+t<-table(gtd[gtd$country_txt %in% top10,c(9,2)])
+#t
+#w
+
+```
+
+```{r}
+t
+
+```
+
+
+Exponential Plot for number of incidents by year for Irak and the World.
+```{r}
+colors <- c("blue","red","green","black")
+plot(colnames(t),t["Iraq",], log="y", type="l", col=colors[1], 
+      ylim=c(1, 40000),
+      xaxt="n",
+      main = "Historical terrorist attacks in Iraq, Afghanistan and Pakistan",
+      xlab="Year", ylab="Annual Terrorist Attacks")
+lines(rownames(w),t["Afghanistan",], type="l", col=colors[2])#, pchl
+lines(rownames(w),t["Pakistan",], type="l", col=colors[3])#, pchl
+lines(rownames(w),w, type="l", col=colors[4])#, pchl
+
+legend("bottomright", # places a legend at the appropriate place c(“Health”,”Defense”), # puts text in the legend
+legend=c("World","Pakistan","Afghanistan","Iraq"),
+  lty=c(1,1), # gives the legend appropriate symbols (lines)
+  lwd=c(2.5,2.5),col=colors[4:1]) # gives the legend lines the correct color and width
+grid(lty=2)
+x_axis = rownames(w)
+x_axis = x_axis[1:length(x_axis) %% 2 == 0]
+axis(1,x_axis, las=2, cex.axis=.8)
+```
+Logarithmic Plot for terrorist attacks by year for top 10 countries and the world
+```{r}
+top<-rownames(tail(x,10)) # top 10 countries by number of terrorist incidents
+t<-table(gtd[gtd$country_txt %in% top,c(9,2)])
+colors <- rainbow(nrow(t))
+countries = rownames(t)
+plot(colnames(t),t["Iraq",], log="y", type="n", col="black",
+     ylim=c(1, 40000), 
+     main = "Terrorist attacks by year for top 10 countries\n(logarithmic graph)",
+     xlab="Year", ylab="Number of Terrorist Attacks", xaxt="n")
+lines(rownames(w), w, type="l", col="black")#, pchl
+for(i in 1:length(countries)){
+ lines(colnames(t),t[i,], type="l", col=colors[i])#, pchl
+}
+
+
+legend("topleft", # places a legend at the appropriate place c(“Health”,”Defense”), # puts text in the legend
+  legend=c("World",countries),
+  lty=c(1,1), # gives the legend appropriate symbols (lines)
+  lwd=c(2.5,2.5),col=c("black",colors), cex=.7, ncol=4) # gives the legend lines the correct color and width
+grid(lty=2)
+axis(1,x_axis, las=2, cex.axis=.8)
+```
+
+Plot number of incidents by year for top 10 countries.
+```{r}
+top<-rownames(tail(x,10)) # top 10 countries by number of terrorist incidents
+t<-table(gtd[gtd$country_txt %in% top,c(9,2)])
+colors <- rainbow(nrow(t))
+countries = rownames(t)
+plot(colnames(t),t["Iraq",], type="n", col=colors[1],ylim=c(1, 4000),
+     xaxt="n",
+     main = "Terrorist attacks by year for top 10 countries",
+     xlab="Year", ylab="Number of Terrorist Attacks")
+for(i in 1:length(countries)){
+  lines(colnames(t),t[i,], type="l", col=colors[i])#, pchl
+}
+
+
+legend("topleft", # places a legend at the appropriate place c(“Health”,”Defense”), # puts text in the legend
+legend=countries,
+lty=c(1,1), # gives the legend appropriate symbols (lines)
+lwd=c(2.5,2.5),col=colors, cex=.8, ncol=1) # gives the legend lines the correct color and width
+grid(lty=2)
+axis(1,x_axis, las=2, cex.axis=.8)
+```
+Individual plots of number of incidents by year for top 10 countries.
+```{r}
+ncountries=10
+top<-rownames(tail(x,ncountries)) # top 10 countries by number of terrorist incidents
+t<-table(gtd[gtd$country_txt %in% top,c(9,2)])
+t<-t[order(rank(rowSums(t))),]
+colors <- rainbow(nrow(t))
+countries = rownames(t)
+#par(pch=22, col="red") # plotting symbol and color 
+par(mfrow=c(ncountries/5,5)) # all plots on one page 
+for(i in 1:length(countries)){
+  plot(colnames(t),t[i,], type="l", col=colors[i],
+       ylim=c(1, max(t[,])), 
+       xaxt="n",
+       xlab="Year", ylab="Number of Terrorist Attacks",main=countries[i])
+grid(lty=2)
+x_axis = rownames(w)
+x_axis = x_axis[1:length(x_axis) %% 9 == 0]
+axis(1,x_axis, las=2, cex.axis=.77)
+}
+```
